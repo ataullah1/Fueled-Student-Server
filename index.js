@@ -9,8 +9,8 @@ const port = process.env.PORT || 3000;
 const options = {
   origin: [
     'http://localhost:5173',
-    'https://office-lunch-menu.web.app',
-    'https://office-lunch-menu.firebaseapp.com',
+    'https://fueled-student.web.app',
+    'https://fueled-student.firebaseapp.com',
   ],
   optionsSuccessStatus: 200,
 };
@@ -91,56 +91,58 @@ async function run() {
 
     //
     // Main part=======================
-    app.post('/add-item', async (req, res) => {
-      const newItem = req.body;
-      // console.log(newItem);
-      const result = await menuCollection.insertOne(newItem);
-      res.send(result);
-    });
+    // app.post('/add-item', async (req, res) => {
+    //   const newItem = req.body;
+    //   // console.log(newItem);
+    //   const result = await mealsCollection.insertOne(newItem);
+    //   res.send(result);
+    // });
 
     app.get('/meals', async (req, res) => {
       const result = await mealsCollection.find().toArray();
       res.send(result);
     });
-    app.get('/orderDta/:email', async (req, res) => {
-      const email = req.params.email;
-      const query = { userEmail: email };
-      const result = await orderCollection.find(query).toArray();
-      res.send(result);
-    });
 
-    app.patch('/order-update', async (req, res) => {
-      const id = req.query.id;
-      const statusDta = req.query.status;
-      // console.log('id:', id, '  status: ', statusDta);
-      const query = { _id: new ObjectId(id) };
-      const docUpdate = {
-        $set: {
-          status: statusDta,
-        },
-      };
-      const result = orderCollection.updateOne(query, docUpdate);
-      res.send(result);
-    });
-    app.put('/update-item', async (req, res) => {
-      const updateItem = req.body;
-      const filter = { _id: req.query.id };
-      // console.log({ ...updateItem });
-      // return
-      const updateDoc = {
-        $set: { ...updateItem },
-      };
-      const result = await menuCollection.updateOne(filter, updateDoc);
-      res.send(result);
-    });
+    // app.get('/orderDta/:email', async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { userEmail: email };
+    //   const result = await orderCollection.find(query).toArray();
+    //   res.send(result);
+    // });
 
-    app.delete('../:id', async (req, res) => {
-      const id = req.params.id;
-      // console.log(id);
-      const query = { _id: new ObjectId(id) };
-      const result = await orderCollection.deleteOne(query);
-      res.send(result);
-    });
+    // app.patch('/order-update', async (req, res) => {
+    //   const id = req.query.id;
+    //   const statusDta = req.query.status;
+    //   // console.log('id:', id, '  status: ', statusDta);
+    //   const query = { _id: new ObjectId(id) };
+    //   const docUpdate = {
+    //     $set: {
+    //       status: statusDta,
+    //     },
+    //   };
+    //   const result = orderCollection.updateOne(query, docUpdate);
+    //   res.send(result);
+    // });
+
+    // app.put('/update-item', async (req, res) => {
+    //   const updateItem = req.body;
+    //   const filter = { _id: req.query.id };
+    //   // console.log({ ...updateItem });
+    //   // return
+    //   const updateDoc = {
+    //     $set: { ...updateItem },
+    //   };
+    //   const result = await menuCollection.updateOne(filter, updateDoc);
+    //   res.send(result);
+    // });
+
+    // app.delete('../:id', async (req, res) => {
+    //   const id = req.params.id;
+    //   // console.log(id);
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await orderCollection.deleteOne(query);
+    //   res.send(result);
+    // });
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 });
