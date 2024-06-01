@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 3000;
@@ -38,6 +39,14 @@ async function run() {
     const userCollection = client.db('fueled_student_DB').collection('users');
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
 
+    // Auth related API
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      res.send(user);
+    });
+
+    // Services related API
     // User part============
 
     // New user post-
