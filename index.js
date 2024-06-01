@@ -35,7 +35,8 @@ async function run() {
     // await client.connect();
 
     // All DB Cullection
-    const userCollection = client.db('dbname').collection('users');
+    const userCollection = client.db('fueled_student_DB').collection('users');
+    const mealsCollection = client.db('fueled_student_DB').collection('meals');
 
     // User part============
 
@@ -89,7 +90,7 @@ async function run() {
     });
 
     //
-    // Main part===========
+    // Main part=======================
     app.post('/add-item', async (req, res) => {
       const newItem = req.body;
       // console.log(newItem);
@@ -97,8 +98,8 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/orders', async (req, res) => {
-      const result = await orderCollection.find().toArray();
+    app.get('/meals', async (req, res) => {
+      const result = await mealsCollection.find().toArray();
       res.send(result);
     });
     app.get('/orderDta/:email', async (req, res) => {
