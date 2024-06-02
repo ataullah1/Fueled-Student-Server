@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 3000;
@@ -13,10 +14,26 @@ const options = {
     'https://fueled-student.web.app',
     'https://fueled-student.firebaseapp.com',
   ],
+  credentials: true,
   optionsSuccessStatus: 200,
 };
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+};
+
 app.use(cors(options));
 app.use(express.json());
+app.use(cookieParser());
+
+// Veryfy token
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies.token;
+  console.log('verifyTokeb:', token);
+
+  next();
+};
 
 // MongoDB URI
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.htex290.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -40,10 +57,13 @@ async function run() {
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
 
     // Auth related API
-    app.post('/jwt', async (req, res) => {
-      const user = req.body;
-      console.log('user email', user);
-      res.send(user);
+    app.post('/jwt/:email', async (req, res) => {
+      const user = req.params.email;
+      const token = jwt.sign({ user }, process.env.TOKEN_SEC, {
+        expiresIn: '1h',
+      });
+      console.log('token:', token);
+      res.cookie('token', token, cookieOptions).send({ success: true });
     });
 
     // Services related API
@@ -63,7 +83,7 @@ async function run() {
       res.send(result);
     });
     // All user read
-    app.get('/users', async (req, res) => {
+    app.get('/users', verifyToken, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
