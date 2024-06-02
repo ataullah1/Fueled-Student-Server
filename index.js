@@ -147,6 +147,41 @@ async function run() {
       const result = await mealsCollection.find().toArray();
       res.send(result);
     });
+    app.get('/meals-six', async (req, res) => {
+      const result = await mealsCollection
+        .find()
+        .sort({ _id: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+    app.get('/breackfast', async (req, res) => {
+      const query = { mealType: 'breackfast' };
+      const result = await mealsCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+    app.get('/lunch', async (req, res) => {
+      const query = { mealType: 'lunch' };
+      const result = await mealsCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+    app.get('/dinner', async (req, res) => {
+      const query = { mealType: 'dinner' };
+      const result = await mealsCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
 
     // app.get('/orderDta/:email', async (req, res) => {
     //   const email = req.params.email;
