@@ -29,10 +29,18 @@ app.use(cookieParser());
 
 // Veryfy token
 const verifyToken = async (req, res, next) => {
-  const token = req.cookies.token;
-  console.log('verifyTokeb:', token);
-
-  next();
+  const token = req.cookies?.token;
+  console.log('verifyTokennn:', token);
+  if (!token) {
+    return res.status(401).send({ message: 'Unauthorized' });
+  }
+  jwt.verify(token, process.env.TOKEN_SEC, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: 'Unauthorized' });
+    }
+    req.user = decoded;
+    next();
+  });
 };
 
 // MongoDB URI
@@ -57,13 +65,20 @@ async function run() {
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
 
     // Auth related API
-    app.post('/jwt/:email', async (req, res) => {
-      const user = req.params.email;
-      const token = jwt.sign({ user }, process.env.TOKEN_SEC, {
-        expiresIn: '1h',
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.TOKEN_SEC, {
+        expiresIn: '1d',
       });
       console.log('token:', token);
       res.cookie('token', token, cookieOptions).send({ success: true });
+    });
+
+    // Cookies remove
+    app.post('/logout', verifyToken, async (req, res) => {
+      const user = req.body;
+      console.log('Remove token');
+      return res.clearCookie('token', { maxAge: 0 }).send({ success: true });
     });
 
     // Services related API
@@ -84,6 +99,7 @@ async function run() {
     });
     // All user read
     app.get('/users', verifyToken, async (req, res) => {
+      console.log('bal:', req.user);
       const result = await userCollection.find().toArray();
       res.send(result);
     });
