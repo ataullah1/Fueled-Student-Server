@@ -63,6 +63,7 @@ async function run() {
     // All DB Cullection
     const userCollection = client.db('fueled_student_DB').collection('users');
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
+    const likeCollection = client.db('fueled_student_DB').collection('likes');
 
     // Auth related API
     app.post('/jwt', async (req, res) => {
@@ -187,6 +188,36 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await mealsCollection.findOne(query);
       // console.log(result);
+      res.send(result);
+    });
+    app.put('/like-count', async (req, res) => {
+      const data = req.body;
+      // console.log(data);
+      const postId = data.id;
+      const count = data.count;
+      const query = { _id: new ObjectId(postId) };
+      // console.log('count value:', count, 'id:', postId);
+      const doc = { $inc: { likes: count } };
+      const result = await mealsCollection.updateOne(query, doc);
+
+      const countLike = data.liked;
+      const email = data.email;
+      const datas = { countLike, email, postId };
+      console.log('dddddddd', datas);
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: { ...datas },
+      };
+      const colorResult = await likeCollection.updateOne(options, updateDoc);
+      // console.log(result);
+      res.send(result, colorResult);
+    });
+
+    app.get('/like-count-colors', async (req, res) => {
+      const id = req.query.id;
+      const email = req.query.email;
+      const query = { postId: id, email: email };
+      const result = await likeCollection.findOne(query);
       res.send(result);
     });
 
