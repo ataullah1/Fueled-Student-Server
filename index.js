@@ -155,8 +155,8 @@ async function run() {
         .toArray();
       res.send(result);
     });
-    app.get('/breackfast', async (req, res) => {
-      const query = { mealType: 'breackfast' };
+    app.get('/breakfast', async (req, res) => {
+      const query = { mealType: 'breakfast' };
       const result = await mealsCollection
         .find(query)
         .sort({ _id: -1 })
@@ -180,6 +180,13 @@ async function run() {
         .sort({ _id: -1 })
         .limit(6)
         .toArray();
+      res.send(result);
+    });
+    app.get('/details/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await mealsCollection.findOne(query);
+      // console.log(result);
       res.send(result);
     });
 
