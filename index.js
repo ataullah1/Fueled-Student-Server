@@ -249,8 +249,46 @@ async function run() {
     app.post('/post-review', async (req, res) => {
       const review = req.body;
       console.log(review);
-      const result = await mealsCollection.insertOne(review);
+      const result = await reviewCollection.insertOne(review);
       res.send(result);
+    });
+    // review post read
+    app.get('/read-review/:id', async (req, res) => {
+      const query = { postId: req.params.id };
+      const result = await reviewCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(result);
+    });
+    // Sum of all rating
+    app.get('/sum-of-rating/:id', async (req, res) => {
+      try {
+        const doc = [
+          { $match: { postId: req.params.id } },
+          {
+            $group: {
+              _id: null,
+              totalRating: { $sum: '$rating' },
+              totalCount: { $sum: 1 },
+            },
+          },
+        ];
+        const result = await reviewCollection.aggregate(doc).toArray();
+        if (result.length > 0) {
+          const totalRating = result[0].totalRating;
+          const totalCount = result[0].totalCount;
+          const averageRating = totalCount > 0 ? totalRating / totalCount : 0; // Calculate average rating
+          res.json({
+            totalRating: totalRating,
+            totalCount: totalCount,
+            averageRating: averageRating,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
     });
 
     // app.get('/orderDta/:email', async (req, res) => {
