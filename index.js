@@ -202,23 +202,40 @@ async function run() {
 
       const countLike = data.liked;
       const email = data.email;
-      const datas = { countLike, email, postId };
-      console.log('dddddddd', datas);
+      const filter = { email: email, postId: postId };
       const options = { upsert: true };
       const updateDoc = {
-        $set: { ...datas },
+        $set: { countLike, email, postId },
       };
-      const colorResult = await likeCollection.updateOne(options, updateDoc);
-      // console.log(result);
-      res.send(result, colorResult);
+      const colorResult = await likeCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      if (colorResult.upsertedCount > 0) {
+        console.log(
+          `A new document was inserted with the _id: ${colorResult.upsertedId}`
+        );
+      } else if (colorResult.modifiedCount > 0) {
+        console.log(`An existing document was updated`);
+      } else {
+        console.log(`No document was modified or inserted`);
+      }
+      res.send({ result, colorResult });
     });
 
-    app.get('/like-count-colors', async (req, res) => {
+    app.get('/liked-count', async (req, res) => {
       const id = req.query.id;
       const email = req.query.email;
       const query = { postId: id, email: email };
       const result = await likeCollection.findOne(query);
-      res.send(result);
+      let likedd = false;
+      if (result?.countLike === 1) {
+        likedd = true;
+      } else {
+        likedd = false;
+      }
+      res.send(likedd);
     });
 
     // app.get('/orderDta/:email', async (req, res) => {
