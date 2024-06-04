@@ -64,6 +64,12 @@ async function run() {
     const userCollection = client.db('fueled_student_DB').collection('users');
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
     const likeCollection = client.db('fueled_student_DB').collection('likes');
+    const reviewLikeCollection = client
+      .db('fueled_student_DB')
+      .collection('review-likes');
+    const reviewCollection = client
+      .db('fueled_student_DB')
+      .collection('reviews');
 
     // Auth related API
     app.post('/jwt', async (req, res) => {
@@ -137,12 +143,12 @@ async function run() {
 
     //
     // Main part=======================
-    // app.post('/add-item', async (req, res) => {
-    //   const newItem = req.body;
-    //   // console.log(newItem);
-    //   const result = await mealsCollection.insertOne(newItem);
-    //   res.send(result);
-    // });
+    app.post('/post-meal', async (req, res) => {
+      const meal = req.body;
+      // console.log(newItem);
+      const result = await mealsCollection.insertOne(meal);
+      res.send(result);
+    });
 
     app.get('/meals', async (req, res) => {
       const result = await mealsCollection.find().toArray();
@@ -190,6 +196,8 @@ async function run() {
       // console.log(result);
       res.send(result);
     });
+
+    // user like post counting
     app.put('/like-count', async (req, res) => {
       const data = req.body;
       // console.log(data);
@@ -212,18 +220,18 @@ async function run() {
         updateDoc,
         options
       );
-      if (colorResult.upsertedCount > 0) {
-        console.log(
-          `A new document was inserted with the _id: ${colorResult.upsertedId}`
-        );
-      } else if (colorResult.modifiedCount > 0) {
-        console.log(`An existing document was updated`);
-      } else {
-        console.log(`No document was modified or inserted`);
-      }
+      // if (colorResult.upsertedCount > 0) {
+      //   console.log(
+      //     `A new document was inserted with the _id: ${colorResult.upsertedId}`
+      //   );
+      // } else if (colorResult.modifiedCount > 0) {
+      //   console.log(`An existing document was updated`);
+      // } else {
+      //   console.log(`No document was modified or inserted`);
+      // }
       res.send({ result, colorResult });
     });
-
+    // Like select or not select
     app.get('/liked-count', async (req, res) => {
       const id = req.query.id;
       const email = req.query.email;
@@ -236,6 +244,13 @@ async function run() {
         likedd = false;
       }
       res.send(likedd);
+    });
+    // add review post
+    app.post('/post-review', async (req, res) => {
+      const review = req.body;
+      // console.log(review);
+      const result = await mealsCollection.insertOne(review);
+      res.send(result);
     });
 
     // app.get('/orderDta/:email', async (req, res) => {
