@@ -278,7 +278,7 @@ async function run() {
         if (result.length > 0) {
           const totalRating = result[0].totalRating;
           const totalCount = result[0].totalCount;
-          const averageRating = totalCount > 0 ? totalRating / totalCount : 0; // Calculate average rating
+          const averageRating = totalCount > 0 ? totalRating / totalCount : 0;
           res.json({
             totalRating: totalRating,
             totalCount: totalCount,
