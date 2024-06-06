@@ -153,13 +153,15 @@ async function run() {
     app.get('/meals', async (req, res) => {
       const page = parseInt(req.query.page) || 1;
       const itemPer = parseInt(req.query.itemper) || 5;
+      const fetchItemPer = page * itemPer;
       // console.log('+++++++>>>', page, itemPer);
-      const result = await mealsCollection
-        .find()
-        .limit(itemPer)
-        .skip((page - 1) * itemPer)
-        .toArray();
+      const result = await mealsCollection.find().limit(fetchItemPer).toArray();
       res.send(result);
+    });
+    app.get('/meals-len', async (req, res) => {
+      const result = await mealsCollection.find().toArray();
+      const finalRes = result.length;
+      res.send({ finalRes });
     });
     app.get('/meals-six', async (req, res) => {
       const result = await mealsCollection
