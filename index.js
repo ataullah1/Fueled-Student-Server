@@ -151,7 +151,14 @@ async function run() {
     });
 
     app.get('/meals', async (req, res) => {
-      const result = await mealsCollection.find().toArray();
+      const page = parseInt(req.query.page) || 1;
+      const itemPer = parseInt(req.query.itemper) || 5;
+      // console.log('+++++++>>>', page, itemPer);
+      const result = await mealsCollection
+        .find()
+        .limit(itemPer)
+        .skip((page - 1) * itemPer)
+        .toArray();
       res.send(result);
     });
     app.get('/meals-six', async (req, res) => {
@@ -248,7 +255,7 @@ async function run() {
     // add review post
     app.post('/post-review', async (req, res) => {
       const review = req.body;
-      console.log(review  );
+      console.log(review);
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
