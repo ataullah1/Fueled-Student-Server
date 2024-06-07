@@ -149,31 +149,17 @@ async function run() {
       const result = await mealsCollection.insertOne(meal);
       res.send(result);
     });
+    // const page = parseInt(req.query.page) || 1;
+    // const itemPer = parseInt(req.query.itemper) || 5;
+    // const fetchItemPer = page * itemPer;
+    // console.log('+++++++>>>', page, itemPer);
 
     app.get('/meals', async (req, res) => {
-      // const page = parseInt(req.query.page) || 1;
-      // const itemPer = parseInt(req.query.itemper) || 5;
-      // const fetchItemPer = page * itemPer;
-      // console.log('+++++++>>>', page, itemPer);
+      const filter = req.query.filter;
+      // const search = req.query.search;
+      const search = 'Authentic Mexican';
 
       let doc = {};
-      const filter = req.query.filter;
-      const search = req.query.search;
-      // Aggregate Pipeline for search
-      const aggregate = [
-        {
-          $search: {
-            index: 'meals-search',
-            text: {
-              query: search,
-              path: {
-                wildcard: '*',
-              },
-            },
-          },
-        },
-      ];
-
       // Filtering logic =======
       if (filter === 'dinner' || filter === 'breakfast' || filter === 'lunch') {
         doc = {
@@ -199,8 +185,20 @@ async function run() {
       try {
         let result;
         if (search) {
-          console.log('bal', search, aggregate);
-          // Apply the aggregation pipeline for searchss
+          const aggregate = [
+            {
+              $search: {
+                index: 'meals-search',
+                text: {
+                  query: search,
+                  path: {
+                    wildcard: '*',
+                  },
+                },
+              },
+            },
+          ];
+          // Apply the aggregation pipeline for search
           result = await mealsCollection.aggregate(aggregate).toArray();
         } else {
           // Use the find method for filtering
@@ -208,7 +206,7 @@ async function run() {
         }
         res.send(result);
       } catch (error) {
-        console.log('Bal error khyco tui');
+        console.error('Error occurred while fetching the meals:', error);
         res.status(500).send('An error occurred while fetching the meals.');
       }
     });
