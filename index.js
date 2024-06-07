@@ -155,7 +155,19 @@ async function run() {
       const itemPer = parseInt(req.query.itemper) || 5;
       const fetchItemPer = page * itemPer;
       // console.log('+++++++>>>', page, itemPer);
-      const result = await mealsCollection.find().limit(fetchItemPer).toArray();
+
+      let doc;
+      const filter = req.query.filter;
+      console.log(filter);
+      if (filter === 'dinner' || filter === 'breakfast' || filter === 'lunch') {
+        doc = {
+          mealType: filter,
+        };
+      }
+      const result = await mealsCollection
+        .find(doc)
+        .limit(fetchItemPer)
+        .toArray();
       res.send(result);
     });
     app.get('/meals-len', async (req, res) => {
