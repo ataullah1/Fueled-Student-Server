@@ -156,28 +156,63 @@ async function run() {
       // const fetchItemPer = page * itemPer;
       // console.log('+++++++>>>', page, itemPer);
 
-      let doc;
+      let doc = {};
       const filter = req.query.filter;
-      // console.log(filter);
+      const search = req.query.search;
+      // Aggregate Pipeline for search
+      const aggregate = [
+        {
+          $search: {
+            index: 'meals-search',
+            text: {
+              query: search,
+              path: {
+                wildcard: '*',
+              },
+            },
+          },
+        },
+      ];
+
+      // Filtering logic =======
       if (filter === 'dinner' || filter === 'breakfast' || filter === 'lunch') {
         doc = {
           mealType: filter,
         };
-      }else if (filter==='15,20'||filter==='10,15'||filter==='5,10'||filter==='0,5') {
-        const filArr=filter.split(',')
-        const filter1=parseInt(filArr[0])
-        const filter2=parseInt(filArr[1])
-        // console.log(filter1);   
-        doc={
-          price:{
-            $gte:filter1,$lte:filter2
-          }  
-         }
-       }
-      // console.log(doc);
-      const result = await mealsCollection.find(doc).toArray();
-      res.send(result);
+      } else if (
+        filter === '15,20' ||
+        filter === '10,15' ||
+        filter === '5,10' ||
+        filter === '0,5'
+      ) {
+        const filArr = filter.split(',');
+        const filter1 = parseInt(filArr[0]);
+        const filter2 = parseInt(filArr[1]);
+        doc = {
+          price: {
+            $gte: filter1,
+            $lte: filter2,
+          },
+        };
+      }
+
+      try {
+        let result;
+        if (search) {
+          console.log('bal', search, aggregate);
+          // Apply the aggregation pipeline for searchss
+          result = await mealsCollection.aggregate(aggregate).toArray();
+        } else {
+          // Use the find method for filtering
+          result = await mealsCollection.find(doc).toArray();
+        }
+        res.send(result);
+      } catch (error) {
+        console.log('Bal error khyco tui');
+        res.status(500).send('An error occurred while fetching the meals.');
+      }
     });
+
     // Meals total length
     app.get('/meals-len', async (req, res) => {
       const result = await mealsCollection.estimatedDocumentCount();
