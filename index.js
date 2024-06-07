@@ -151,30 +151,41 @@ async function run() {
     });
 
     app.get('/meals', async (req, res) => {
-      const page = parseInt(req.query.page) || 1;
-      const itemPer = parseInt(req.query.itemper) || 5;
-      const fetchItemPer = page * itemPer;
+      // const page = parseInt(req.query.page) || 1;
+      // const itemPer = parseInt(req.query.itemper) || 5;
+      // const fetchItemPer = page * itemPer;
       // console.log('+++++++>>>', page, itemPer);
 
       let doc;
       const filter = req.query.filter;
-      console.log(filter);
+      // console.log(filter);
       if (filter === 'dinner' || filter === 'breakfast' || filter === 'lunch') {
         doc = {
           mealType: filter,
         };
-      }
-      const result = await mealsCollection
-        .find(doc)
-        .limit(fetchItemPer)
-        .toArray();
+      }else if (filter==='15,20'||filter==='10,15'||filter==='5,10'||filter==='0,5') {
+        const filArr=filter.split(',')
+        const filter1=parseInt(filArr[0])
+        const filter2=parseInt(filArr[1])
+        // console.log(filter1);   
+        doc={
+          price:{
+            $gte:filter1,$lte:filter2
+          }  
+         }
+       }
+      // console.log(doc);
+      const result = await mealsCollection.find(doc).toArray();
       res.send(result);
     });
+    // Meals total length
     app.get('/meals-len', async (req, res) => {
-      const result = await mealsCollection.find().toArray();
-      const finalRes = result.length;
+      const result = await mealsCollection.estimatedDocumentCount();
+      const finalRes = result;
+      // console.log(finalRes);
       res.send({ finalRes });
     });
+
     app.get('/meals-six', async (req, res) => {
       const result = await mealsCollection
         .find()
