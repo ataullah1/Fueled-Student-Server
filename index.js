@@ -156,10 +156,11 @@ async function run() {
     });
 
     app.get('/meals', async (req, res) => {
-      const page = parseInt(req.query.page);
-      const itemPer = parseInt(req.query.itemper);
-      const fetchItemPer = page * itemPer;
-      console.log('+++++++>>>', fetchItemPer);
+      // const page = parseInt(req.query.page);
+      // const itemPer = parseInt(req.query.itemper);
+      const offset = parseInt(req.query.offset);
+      const limit = parseInt(req.query.limit);
+      // console.log('+++++++>>>', fetchItemPer);
 
       const filter = req.query.filter;
       // const search = req.query.search;
@@ -197,13 +198,15 @@ async function run() {
           };
           result = await mealsCollection
             .find(query)
-            .limit(fetchItemPer)
+            .skip(limit * offset)
+            .limit(limit)
             .toArray();
         } else {
           // Use the find method for filtering
           result = await mealsCollection
             .find(doc)
-            .limit(fetchItemPer)
+            .skip(limit * offset)
+            .limit(limit)
             .toArray();
         }
         res.send(result);
