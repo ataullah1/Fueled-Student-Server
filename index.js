@@ -61,8 +61,13 @@ async function run() {
     // await client.connect();
 
     // All DB Cullection
-    const userCollection = client.db('fueled_student_DB').collection('users');
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
+
+    // Create an index on the 'title' field
+    await mealsCollection.createIndex({ title: 1 });
+    console.log('Index created on title field');
+
+    const userCollection = client.db('fueled_student_DB').collection('users');
     const likeCollection = client.db('fueled_student_DB').collection('likes');
     const reviewLikeCollection = client
       .db('fueled_student_DB')
@@ -149,15 +154,16 @@ async function run() {
       const result = await mealsCollection.insertOne(meal);
       res.send(result);
     });
-    // const page = parseInt(req.query.page) || 1;
-    // const itemPer = parseInt(req.query.itemper) || 5;
-    // const fetchItemPer = page * itemPer;
-    // console.log('+++++++>>>', page, itemPer);
 
     app.get('/meals', async (req, res) => {
+      const page = parseInt(req.query.page);
+      const itemPer = parseInt(req.query.itemper);
+      const fetchItemPer = page * itemPer;
+      console.log('+++++++>>>', fetchItemPer);
+
       const filter = req.query.filter;
       // const search = req.query.search;
-      const search = 'Authentic Mexican';
+      const search = req.query.search;
 
       let doc = {};
       // Filtering logic =======
@@ -185,24 +191,20 @@ async function run() {
       try {
         let result;
         if (search) {
-          const aggregate = [
-            {
-              $search: {
-                index: 'meals-search',
-                text: {
-                  query: search,
-                  path: {
-                    wildcard: '*',
-                  },
-                },
-              },
-            },
-          ];
-          // Apply the aggregation pipeline for search
-          result = await mealsCollection.aggregate(aggregate).toArray();
+          const query = {
+            // description: { $regex: filter, $options: 'i' },
+            title: { $regex: search, $options: 'i' },
+          };
+          result = await mealsCollection
+            .find(query)
+            .limit(fetchItemPer)
+            .toArray();
         } else {
           // Use the find method for filtering
-          result = await mealsCollection.find(doc).toArray();
+          result = await mealsCollection
+            .find(doc)
+            .limit(fetchItemPer)
+            .toArray();
         }
         res.send(result);
       } catch (error) {
