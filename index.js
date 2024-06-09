@@ -325,6 +325,19 @@ async function run() {
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
+    // add review post
+    app.put('/review-update/:id', async (req, res) => {
+      const review = req.body;
+      const filter = { _id: new ObjectId(req.params.id) };
+      // console.log(review);
+      const doc = {
+        $set: {
+          ...review,
+        },
+      };
+      const result = await reviewCollection.updateOne(filter, doc);
+      res.send(result);
+    });
     // review read by my post
     app.get('/read-my-review/:email', async (req, res) => {
       const email = req.params.email;
@@ -356,21 +369,21 @@ async function run() {
         }, {});
 
         // Merge the arrays and adjust the structure as required
-        const finalResult = myReviewArr.map((request) => {
-          const meal = mealsLookup[request.postId];
+        const finalResult = myReviewArr.map((review) => {
+          const meal = mealsLookup[review.postId];
           if (meal) {
-            // Combine the request and meal objects, remove original _id
-            const { _id, ...mealData } = meal;
+            // Combine the review and meal objects, remove original _id and meal rating
+            const { _id, rating, ...mealData } = meal;
             return {
-              ...request,
+              ...review,
               ...mealData,
-              _id: request._id, // retain the original request _id
+              _id: review._id, // retain the original review _id
             };
           }
-          return request;
+          return review;
         });
 
-        console.log(finalResult);
+        // console.log(finalResult);
         res.send(finalResult);
       } catch (error) {
         console.error('Error fetching meal data:', error);
