@@ -325,6 +325,58 @@ async function run() {
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
+    // review read by my post
+    app.get('/read-my-review/:email', async (req, res) => {
+      const email = req.params.email;
+      try {
+        const query = { reviewUserEmail: email };
+        const myReviewArr = await reviewCollection
+          .find(query)
+          .sort({ _id: -1 })
+          .toArray();
+
+        // Ensure that we have requests
+        if (myReviewArr.length === 0) {
+          return res.status(404).send([]);
+        }
+
+        // Extract recMealIds from requests and convert them to ObjectId
+        const recMealIds = myReviewArr.map(
+          (review) => new ObjectId(review.postId)
+        );
+
+        // Query the meals collection with the array of recMealIds
+        const queryMeal = { _id: { $in: recMealIds } };
+        const mealsArray = await mealsCollection.find(queryMeal).toArray();
+
+        // Create a lookup object from mealsArray
+        const mealsLookup = mealsArray.reduce((acc, meal) => {
+          acc[meal._id.toString()] = meal;
+          return acc;
+        }, {});
+
+        // Merge the arrays and adjust the structure as required
+        const finalResult = myReviewArr.map((request) => {
+          const meal = mealsLookup[request.postId];
+          if (meal) {
+            // Combine the request and meal objects, remove original _id
+            const { _id, ...mealData } = meal;
+            return {
+              ...request,
+              ...mealData,
+              _id: request._id, // retain the original request _id
+            };
+          }
+          return request;
+        });
+
+        console.log(finalResult);
+        res.send(finalResult);
+      } catch (error) {
+        console.error('Error fetching meal data:', error);
+        res.status(500).send({ error: 'Internal Server Error' });
+      }
+    });
     // review post read
     app.get('/read-review/:id', async (req, res) => {
       const query = { postId: req.params.id };
@@ -332,6 +384,12 @@ async function run() {
         .find(query)
         .sort({ _id: -1 })
         .toArray();
+      res.send(result);
+    });
+    // My review delete
+    app.delete('/delete-review/:id', async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await reviewCollection.deleteOne(query);
       res.send(result);
     });
     // Sum of all rating
@@ -365,10 +423,9 @@ async function run() {
     });
 
     // Meals Request
-    // add review post
     app.post('/meals-request', async (req, res) => {
       const request = req.body;
-      console.log(request);
+      // console.log(request);
       const query = {
         recEmail: request.recEmail,
         recMealId: request.recMealId,
@@ -386,15 +443,61 @@ async function run() {
 
     app.get('/request-meals/:email', async (req, res) => {
       const email = req.params.email;
-      // console.log(email);
-      const query = {
-        recEmail: email,
-      };
-      const request = await mealsRequestCollection.find(query).toArray();
-      console.log('iddddd', request.stringify);
-      const queryMeal = { _id: request.recMealId };
-      const result = await mealsCollection.find(queryMeal).toArray();
-      console.log(result);
+      try {
+        const query = { recEmail: email };
+        const requestsArray = await mealsRequestCollection
+          .find(query)
+          .sort({ _id: -1 })
+          .toArray();
+
+        // Ensure that we have requests
+        if (requestsArray.length === 0) {
+          return res.status(404).send([]);
+        }
+
+        // Extract recMealIds from requests and convert them to ObjectId
+        const recMealIds = requestsArray.map(
+          (request) => new ObjectId(request.recMealId)
+        );
+
+        // Query the meals collection with the array of recMealIds
+        const queryMeal = { _id: { $in: recMealIds } };
+        const mealsArray = await mealsCollection.find(queryMeal).toArray();
+
+        // Create a lookup object from mealsArray
+        const mealsLookup = mealsArray.reduce((acc, meal) => {
+          acc[meal._id.toString()] = meal;
+          return acc;
+        }, {});
+
+        // Merge the arrays and adjust the structure as required
+        const finalResult = requestsArray.map((request) => {
+          const meal = mealsLookup[request.recMealId];
+          if (meal) {
+            // Combine the request and meal objects, remove original _id
+            const { _id, ...mealData } = meal;
+            return {
+              ...request,
+              ...mealData,
+              _id: request._id, // retain the original request _id
+            };
+          }
+          return request;
+        });
+
+        // console.log(finalResult);
+        res.send(finalResult);
+      } catch (error) {
+        console.error('Error fetching meal data:', error);
+        res.status(500).send({ error: 'Internal Server Error' });
+      }
+    });
+
+    app.delete('/cancel-req/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const result = await mealsRequestCollection.deleteOne(query);
       res.send(result);
     });
 
