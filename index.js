@@ -142,10 +142,10 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const update = {
         $set: {
-          power: role,
+          role: role,
         },
       };
-      const result = employeeCollection.updateOne(query, update);
+      const result = await userCollection.updateOne(query, update);
       res.send(result);
     });
 
