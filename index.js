@@ -69,6 +69,9 @@ async function run() {
 
     const userCollection = client.db('fueled_student_DB').collection('users');
     const likeCollection = client.db('fueled_student_DB').collection('likes');
+    const mealsRequestCollection = client
+      .db('fueled_student_DB')
+      .collection('meals-request');
     const reviewLikeCollection = client
       .db('fueled_student_DB')
       .collection('review-likes');
@@ -359,6 +362,40 @@ async function run() {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
+    });
+
+    // Meals Request
+    // add review post
+    app.post('/meals-request', async (req, res) => {
+      const request = req.body;
+      console.log(request);
+      const query = {
+        recEmail: request.recEmail,
+        recMealId: request.recMealId,
+      };
+      const existRec = await mealsRequestCollection.findOne(query);
+      if (existRec) {
+        return res.send({
+          message: 'Request Allready Exists',
+          insertedId: null,
+        });
+      }
+      const result = await mealsRequestCollection.insertOne(request);
+      res.send(result);
+    });
+
+    app.get('/request-meals/:email', async (req, res) => {
+      const email = req.params.email;
+      // console.log(email);
+      const query = {
+        recEmail: email,
+      };
+      const request = await mealsRequestCollection.find(query).toArray();
+      console.log('iddddd', request.stringify);
+      const queryMeal = { _id: request.recMealId };
+      const result = await mealsCollection.find(queryMeal).toArray();
+      console.log(result);
+      res.send(result);
     });
 
     // app.get('/orderDta/:email', async (req, res) => {
