@@ -218,7 +218,25 @@ async function run() {
         res.status(500).send('An error occurred while fetching the meals.');
       }
     });
-
+    // update meal
+    app.put('/meal-update/:id', async (req, res) => {
+      const meal = req.body;
+      const filter = { _id: new ObjectId(req.params.id) };
+      // console.log(review);
+      const doc = {
+        $set: {
+          ...meal,
+        },
+      };
+      const result = await mealsCollection.updateOne(filter, doc);
+      res.send(result);
+    });
+    // Meal delete
+    app.delete('/delete-meal/:id', async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await mealsCollection.deleteOne(query);
+      res.send(result);
+    });
     // Meals total length
     app.get('/meals-len', async (req, res) => {
       const result = await mealsCollection.estimatedDocumentCount();
@@ -325,7 +343,7 @@ async function run() {
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
-    // add review post
+    // Update review post
     app.put('/review-update/:id', async (req, res) => {
       const review = req.body;
       const filter = { _id: new ObjectId(req.params.id) };
@@ -350,7 +368,7 @@ async function run() {
 
         // Ensure that we have requests
         if (myReviewArr.length === 0) {
-          return res.status(404).send([]);
+          return res.send([]);
         }
 
         // Extract recMealIds from requests and convert them to ObjectId
@@ -465,7 +483,7 @@ async function run() {
 
         // Ensure that we have requests
         if (requestsArray.length === 0) {
-          return res.status(404).send([]);
+          return res.send([]);
         }
 
         // Extract recMealIds from requests and convert them to ObjectId
