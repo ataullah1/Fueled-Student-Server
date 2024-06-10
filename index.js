@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SEC_KEY);
+
 const port = process.env.PORT || 3000;
 
 // Middleware ==============
@@ -97,6 +99,7 @@ async function run() {
     });
 
     // Services related API
+
     // User part============
 
     // New user post-
@@ -149,7 +152,24 @@ async function run() {
       res.send(result);
     });
 
-    //
+    // Payment part
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const pricee = parseInt(price * 100);
+      console.log(pricee);
+      // return;
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: calculateOrderAmount(pricee),
+        currency: 'usd',
+        payment_method_types: ['card'],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
     // Main part=======================
     app.post('/upcomig-meal', async (req, res) => {
       const meal = req.body;
