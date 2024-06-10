@@ -246,8 +246,8 @@ async function run() {
     app.get('/meals', async (req, res) => {
       // const page = parseInt(req.query.page);
       // const itemPer = parseInt(req.query.itemper);
-      const offset = parseInt(req.query.offset);
-      const limit = parseInt(req.query.limit);
+      // const offset = parseInt(req.query.offset);
+      // const limit = parseInt(req.query.limit);
       // console.log('+++++++>>>', fetchItemPer);
 
       const filter = req.query.filter;
@@ -286,8 +286,8 @@ async function run() {
           };
           result = await mealsCollection
             .find(query)
-            .skip(limit * offset)
-            .limit(limit)
+            // .skip(limit * offset)
+            // .limit(limit)
             .sort({ _id: -1 })
             .toArray();
         } else {
