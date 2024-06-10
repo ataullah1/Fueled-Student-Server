@@ -180,9 +180,22 @@ async function run() {
       res.send(result);
     });
     //  Payment History read
-    app.get('/paymentss', async (req, res) => {
-      const result = await paymentCollection.find().sort({ _id: -1 }).toArray();
+    app.get('/paymentss/:email', async (req, res) => {
+      const query = { email: req.params.email };
+      const result = await paymentCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(result);
+    });
+    app.get('/paymentssCnf/:email', async (req, res) => {
+      const query = { email: req.params.email };
+      const result = await paymentCollection.findOne(query);
+      let final = false;
+      if (result) {
+        final = true;
+      }
+      res.send(final);
     });
 
     // Main part=======================
@@ -195,7 +208,7 @@ async function run() {
     app.get('/upcoming-meals', async (req, res) => {
       const result = await upcomingCollection
         .find()
-        .sort({ _id: -1 })
+        .sort({ likes: -1 })
         .toArray();
       res.send(result);
     });
