@@ -176,7 +176,13 @@ async function run() {
     //  Payment Saved
     app.post('/payments', async (req, res) => {
       const data = req.body;
+      const query = { email: data.email };
+      const existUser = await paymentCollection.findOne(query);
+      if (existUser) {
+        return res.send({ message: 'User Allready Exists', insertedId: null });
+      }
       const result = await paymentCollection.insertOne(data);
+
       res.send(result);
     });
     //  Payment History read
