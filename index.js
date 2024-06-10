@@ -69,12 +69,12 @@ async function run() {
 
     const userCollection = client.db('fueled_student_DB').collection('users');
     const likeCollection = client.db('fueled_student_DB').collection('likes');
+    const upcomingCollection = client
+      .db('fueled_student_DB')
+      .collection('upcoming_meals');
     const mealsRequestCollection = client
       .db('fueled_student_DB')
       .collection('meals-request');
-    const reviewLikeCollection = client
-      .db('fueled_student_DB')
-      .collection('review-likes');
     const reviewCollection = client
       .db('fueled_student_DB')
       .collection('reviews');
@@ -151,6 +151,37 @@ async function run() {
 
     //
     // Main part=======================
+    app.post('/upcomig-meal', async (req, res) => {
+      const meal = req.body;
+      // console.log(newItem);
+      const result = await upcomingCollection.insertOne(meal);
+      res.send(result);
+    });
+    app.get('/upcoming-meals', async (req, res) => {
+      const result = await upcomingCollection
+        .find()
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(result);
+    });
+    app.put('/upcoming-meal-update/:id', async (req, res) => {
+      const meal = req.body;
+      const filter = { _id: new ObjectId(req.params.id) };
+      // console.log(review);
+      const doc = {
+        $set: {
+          ...meal,
+        },
+      };
+      const result = await upcomingCollection.updateOne(filter, doc);
+      res.send(result);
+    });
+    // Meal delete Upcoming
+    app.delete('/delete-upcoming-meal/:id', async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await upcomingCollection.deleteOne(query);
+      res.send(result);
+    });
     app.post('/post-meal', async (req, res) => {
       const meal = req.body;
       // console.log(newItem);
@@ -203,6 +234,7 @@ async function run() {
             .find(query)
             .skip(limit * offset)
             .limit(limit)
+            .sort({ _id: -1 })
             .toArray();
         } else {
           // Use the find method for filtering
@@ -210,6 +242,7 @@ async function run() {
             .find(doc)
             .skip(limit * offset)
             .limit(limit)
+            .sort({ _id: -1 })
             .toArray();
         }
         res.send(result);
@@ -343,6 +376,12 @@ async function run() {
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
+    // reviews read
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewCollection.find().sort({ _id: -1 }).toArray();
+      res.send(result);
+    });
+
     // Update review post
     app.put('/review-update/:id', async (req, res) => {
       const review = req.body;
@@ -359,54 +398,12 @@ async function run() {
     // review read by my post
     app.get('/read-my-review/:email', async (req, res) => {
       const email = req.params.email;
-      try {
-        const query = { reviewUserEmail: email };
-        const myReviewArr = await reviewCollection
-          .find(query)
-          .sort({ _id: -1 })
-          .toArray();
-
-        // Ensure that we have requests
-        if (myReviewArr.length === 0) {
-          return res.send([]);
-        }
-
-        // Extract recMealIds from requests and convert them to ObjectId
-        const recMealIds = myReviewArr.map(
-          (review) => new ObjectId(review.postId)
-        );
-
-        // Query the meals collection with the array of recMealIds
-        const queryMeal = { _id: { $in: recMealIds } };
-        const mealsArray = await mealsCollection.find(queryMeal).toArray();
-
-        // Create a lookup object from mealsArray
-        const mealsLookup = mealsArray.reduce((acc, meal) => {
-          acc[meal._id.toString()] = meal;
-          return acc;
-        }, {});
-
-        // Merge the arrays and adjust the structure as required
-        const finalResult = myReviewArr.map((review) => {
-          const meal = mealsLookup[review.postId];
-          if (meal) {
-            // Combine the review and meal objects, remove original _id and meal rating
-            const { _id, rating, ...mealData } = meal;
-            return {
-              ...review,
-              ...mealData,
-              _id: review._id, // retain the original review _id
-            };
-          }
-          return review;
-        });
-
-        // console.log(finalResult);
-        res.send(finalResult);
-      } catch (error) {
-        console.error('Error fetching meal data:', error);
-        res.status(500).send({ error: 'Internal Server Error' });
-      }
+      const query = { reviewUserEmail: email };
+      const myReviewArr = await reviewCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(myReviewArr);
     });
     // review post read
     app.get('/read-review/:id', async (req, res) => {
@@ -532,46 +529,35 @@ async function run() {
       res.send(result);
     });
 
-    // app.get('/orderDta/:email', async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { userEmail: email };
-    //   const result = await orderCollection.find(query).toArray();
-    //   res.send(result);
-    // });
+    app.get('/request', async (req, res) => {
+      const requestsArray = await mealsRequestCollection
+        .find()
+        .sort({ _id: -1 })
+        .toArray();
+      // console.log(requestsArray);
+      res.send(requestsArray);
+    });
+    app.patch('/request-meals-status-update', async (req, res) => {
+      const id = req.query.id;
+      const status = req.query.status;
+      // console.log('id:', id, '  status: ', statusDta);
+      const query = { _id: new ObjectId(id) };
+      const docUpdate = {
+        $set: {
+          status: status,
+        },
+      };
+      const result = mealsRequestCollection.updateOne(query, docUpdate);
+      res.send(result);
+    });
 
-    // app.patch('/order-update', async (req, res) => {
-    //   const id = req.query.id;
-    //   const statusDta = req.query.status;
-    //   // console.log('id:', id, '  status: ', statusDta);
-    //   const query = { _id: new ObjectId(id) };
-    //   const docUpdate = {
-    //     $set: {
-    //       status: statusDta,
-    //     },
-    //   };
-    //   const result = orderCollection.updateOne(query, docUpdate);
-    //   res.send(result);
-    // });
-
-    // app.put('/update-item', async (req, res) => {
-    //   const updateItem = req.body;
-    //   const filter = { _id: req.query.id };
-    //   // console.log({ ...updateItem });
-    //   // return
-    //   const updateDoc = {
-    //     $set: { ...updateItem },
-    //   };
-    //   const result = await menuCollection.updateOne(filter, updateDoc);
-    //   res.send(result);
-    // });
-
-    // app.delete('../:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   // console.log(id);
-    //   const query = { _id: new ObjectId(id) };
-    //   const result = await orderCollection.deleteOne(query);
-    //   res.send(result);
-    // });
+    app.delete('/request-delete/:id', async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const result = await mealsRequestCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 });
