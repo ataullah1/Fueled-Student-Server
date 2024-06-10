@@ -71,6 +71,9 @@ async function run() {
 
     const userCollection = client.db('fueled_student_DB').collection('users');
     const likeCollection = client.db('fueled_student_DB').collection('likes');
+    const paymentCollection = client
+      .db('fueled_student_DB')
+      .collection('payments');
     const upcomingCollection = client
       .db('fueled_student_DB')
       .collection('upcoming_meals');
@@ -152,15 +155,15 @@ async function run() {
       res.send(result);
     });
 
-    // Payment part
+    // Payment part token passing =======
     app.post('/create-payment-intent', async (req, res) => {
       const { price } = req.body;
       const pricee = parseInt(price * 100);
-      console.log(pricee);
+      // console.log(pricee);
       // return;
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: calculateOrderAmount(pricee),
+        amount: pricee,
         currency: 'usd',
         payment_method_types: ['card'],
       });
@@ -168,6 +171,18 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+
+    //  Payment Saved
+    app.post('/payments', async (req, res) => {
+      const data = req.body;
+      const result = await paymentCollection.insertOne(data);
+      res.send(result);
+    });
+    //  Payment History read
+    app.get('/paymentss', async (req, res) => {
+      const result = await paymentCollection.find().sort({ _id: -1 }).toArray();
+      res.send(result);
     });
 
     // Main part=======================
