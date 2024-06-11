@@ -244,17 +244,10 @@ async function run() {
     });
 
     app.get('/meals', async (req, res) => {
-      // const page = parseInt(req.query.page);
-      // const itemPer = parseInt(req.query.itemper);
-      // const offset = parseInt(req.query.offset);
-      // const limit = parseInt(req.query.limit);
-      // console.log('+++++++>>>', fetchItemPer);
-
       const filter = req.query.filter;
-      // const search = req.query.search;
       const search = req.query.search;
 
-      let doc = {};
+      let doc;
       // Filtering logic =======
       if (filter === 'dinner' || filter === 'breakfast' || filter === 'lunch') {
         doc = {
@@ -277,33 +270,18 @@ async function run() {
         };
       }
 
-      try {
-        let result;
-        if (search) {
-          const query = {
-            // description: { $regex: filter, $options: 'i' },
-            title: { $regex: search, $options: 'i' },
-          };
-          result = await mealsCollection
-            .find(query)
-            // .skip(limit * offset)
-            // .limit(limit)
-            .sort({ _id: -1 })
-            .toArray();
-        } else {
-          // Use the find method for filtering
-          result = await mealsCollection
-            .find(doc)
-            .skip(limit * offset)
-            .limit(limit)
-            .sort({ _id: -1 })
-            .toArray();
-        }
-        res.send(result);
-      } catch (error) {
-        console.error('Error occurred while fetching the meals:', error);
-        res.status(500).send('An error occurred while fetching the meals.');
+      let result;
+      if (search) {
+        const query = {
+          title: { $regex: search, $options: 'i' },
+        };
+        result = await mealsCollection.find(query).sort({ _id: -1 }).toArray();
+      } else if (doc) {
+        result = await mealsCollection.find(doc).sort({ _id: -1 }).toArray();
+      } else {
+        result = await mealsCollection.find().sort({ _id: -1 }).toArray();
       }
+      res.send(result);
     });
     // update meal
     app.put('/meal-update/:id', async (req, res) => {
