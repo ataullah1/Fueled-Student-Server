@@ -295,6 +295,9 @@ async function run() {
     app.get('/meals', async (req, res) => {
       const filter = req.query.filter;
       const search = req.query.search;
+      const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+      const pageSize = 3;
+      const skip = (page - 1) * pageSize;
 
       let doc;
       // Filtering logic =======
@@ -332,13 +335,33 @@ async function run() {
         const query = {
           title: { $regex: search, $options: 'i' },
         };
-        result = await mealsCollection.find(query).sort({ _id: -1 }).toArray();
+        result = await mealsCollection
+          .find(query)
+          .sort({ _id: -1 })
+          .skip(skip)
+          .limit(pageSize)
+          .toArray();
       } else if (doc) {
         // console.log(doc);
-        result = await mealsCollection.find(doc).sort({ _id: -1 }).toArray();
+        result = await mealsCollection
+          .find(doc)
+          .sort({ _id: -1 })
+          .skip(skip)
+          .limit(pageSize)
+          .toArray();
       } else {
-        result = await mealsCollection.find().sort({ _id: -1 }).toArray();
+        result = await mealsCollection
+          .find()
+          .sort({ _id: -1 })
+          .skip(skip)
+          .limit(pageSize)
+          .toArray();
       }
+      res.send(result);
+    });
+    // detabase all mealsa
+    app.get('/all-meals', async (req, res) => {
+      const result = await mealsCollection.find().sort({ _id: -1 }).toArray();
       res.send(result);
     });
     // update meal
