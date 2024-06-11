@@ -242,7 +242,7 @@ async function run() {
       const result = await mealsCollection.insertOne(meal);
       res.send(result);
     });
-
+    // Author Md Ataullah
     app.get('/meals', async (req, res) => {
       const filter = req.query.filter;
       const search = req.query.search;
