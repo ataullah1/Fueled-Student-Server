@@ -77,6 +77,8 @@ async function run() {
     const upcomingCollection = client
       .db('fueled_student_DB')
       .collection('upcoming_meals');
+    // Create an index on the 'title' field
+    await mealsCollection.createIndex({ title: 1 });
     const mealsRequestCollection = client
       .db('fueled_student_DB')
       .collection('meals-request');
@@ -212,10 +214,57 @@ async function run() {
       res.send(result);
     });
     app.get('/upcoming-meals', async (req, res) => {
-      const result = await upcomingCollection
-        .find()
-        .sort({ likes: -1 })
-        .toArray();
+      const filter = req.query.filter;
+      const search = req.query.search;
+
+      let doc;
+      // Filtering logic =======
+      if (filter === 'dinner' || filter === 'breakfast' || filter === 'lunch') {
+        doc = {
+          mealType: filter,
+        };
+      } else if (
+        filter === '15,20' ||
+        filter === '10,15' ||
+        filter === '5,10' ||
+        filter === '0,5'
+      ) {
+        const filArr = filter.split(',');
+        const filter1 = parseInt(filArr[0]);
+        const filter2 = parseInt(filArr[1]);
+        doc = {
+          price: {
+            $gte: filter1,
+            $lte: filter2,
+          },
+        };
+      } else if (filter === '20') {
+        const filterAb = parseInt(filter);
+        console.log(filterAb, '++++++++');
+        doc = {
+          price: {
+            $gte: filterAb,
+          },
+        };
+      }
+
+      let result;
+      if (search) {
+        const query = {
+          title: { $regex: search, $options: 'i' },
+        };
+        result = await upcomingCollection
+          .find(query)
+          .sort({ likes: -1 })
+          .toArray();
+      } else if (doc) {
+        result = await upcomingCollection
+          .find(doc)
+          .sort({ likes: -1 })
+          .toArray();
+      } else {
+        result = await upcomingCollection.find().sort({ likes: -1 }).toArray();
+      }
       res.send(result);
     });
     app.put('/upcoming-meal-update/:id', async (req, res) => {
@@ -268,6 +317,14 @@ async function run() {
             $lte: filter2,
           },
         };
+      } else if (filter === '20') {
+        const filterAb = parseInt(filter);
+        console.log(filterAb, '++++++++');
+        doc = {
+          price: {
+            $gte: filterAb,
+          },
+        };
       }
 
       let result;
@@ -277,6 +334,7 @@ async function run() {
         };
         result = await mealsCollection.find(query).sort({ _id: -1 }).toArray();
       } else if (doc) {
+        console.log(doc);
         result = await mealsCollection.find(doc).sort({ _id: -1 }).toArray();
       } else {
         result = await mealsCollection.find().sort({ _id: -1 }).toArray();
@@ -352,7 +410,6 @@ async function run() {
       // console.log(result);
       res.send(result);
     });
-
     // user like post counting
     app.put('/like-count', async (req, res) => {
       const data = req.body;
@@ -592,7 +649,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 });
+    // await client.db('admin').command({ ping: 1 });
     console.log('PYou successfully connected to MongoDB!');
   } finally {
     // Ensures that the client will close when you finish/error
