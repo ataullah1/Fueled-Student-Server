@@ -319,7 +319,7 @@ async function run() {
         };
       } else if (filter === '20') {
         const filterAb = parseInt(filter);
-        console.log(filterAb, '++++++++');
+        // console.log(filterAb, '++++++++');
         doc = {
           price: {
             $gte: filterAb,
