@@ -240,7 +240,7 @@ async function run() {
         };
       } else if (filter === '20') {
         const filterAb = parseInt(filter);
-        console.log(filterAb, '++++++++');
+        // console.log(filterAb, '++++++++');
         doc = {
           price: {
             $gte: filterAb,
@@ -334,7 +334,7 @@ async function run() {
         };
         result = await mealsCollection.find(query).sort({ _id: -1 }).toArray();
       } else if (doc) {
-        console.log(doc);
+        // console.log(doc);
         result = await mealsCollection.find(doc).sort({ _id: -1 }).toArray();
       } else {
         result = await mealsCollection.find().sort({ _id: -1 }).toArray();
@@ -410,7 +410,7 @@ async function run() {
       // console.log(result);
       res.send(result);
     });
-    // user like post counting
+    // user Meals post like counting
     app.put('/like-count', async (req, res) => {
       const data = req.body;
       // console.log(data);
@@ -442,6 +442,31 @@ async function run() {
       // } else {
       //   console.log(`No document was modified or inserted`);
       // }
+      res.send({ result, colorResult });
+    });
+    // user Meals post like counting
+    app.put('/like-count-upcoming', async (req, res) => {
+      const data = req.body;
+      // console.log(data);
+      const postId = data.id;
+      const count = data.count;
+      const query = { _id: new ObjectId(postId) };
+      // console.log('count value:', count, 'id:', postId);
+      const doc = { $inc: { likes: count } };
+      const result = await upcomingCollection.updateOne(query, doc);
+
+      const countLike = data.liked;
+      const email = data.email;
+      const filter = { email: email, postId: postId };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: { countLike, email, postId },
+      };
+      const colorResult = await likeCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
       res.send({ result, colorResult });
     });
     // Like select or not select
