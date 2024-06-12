@@ -276,7 +276,7 @@ async function run() {
         .toArray();
       res.send(result);
     });
-    app.get('/paymentssCnf/:email', verifyToken, async (req, res) => {
+    app.get('/paymentssCnf/:email', async (req, res) => {
       const query = { email: req.params.email };
       const result = await paymentCollection.findOne(query);
       let final = false;
@@ -795,9 +795,17 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/total-request', verifyToken, async (req, res) => {
+      const result = await mealsRequestCollection.estimatedDocumentCount();
+      res.send({ count: result });
+    });
+
     app.get('/request', async (req, res) => {
       const search = req.query.search;
       const filter = req.query.filter;
+      const perpage = parseInt(req.query.perpage);
+      const currentpage = parseInt(req.query.currentpage);
+      const skip = perpage * currentpage;
 
       let doc;
       if (
@@ -827,6 +835,8 @@ async function run() {
       } else {
         result = await mealsRequestCollection
           .find()
+          .limit(perpage)
+          .skip(skip)
           .sort({ _id: -1 })
           .toArray();
       }
