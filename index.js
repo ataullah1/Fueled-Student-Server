@@ -97,7 +97,7 @@ async function run() {
       const token = jwt.sign(user, process.env.TOKEN_SEC, {
         expiresIn: '1d',
       });
-      console.log('token:', token);
+      // console.log('token:', token);
       res.cookie('token', token, cookieOptions).send({ success: true });
     });
 
@@ -171,9 +171,13 @@ async function run() {
     });
 
     // Check Admin
-    app.get('/user/admin/:email', async (req, res) => {
+    app.get('/user/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       // console.log(email);
+      if (email !== req.user.email) {
+        return req.status(403).send({ message: 'Unauthorized access' });
+      }
+      // console.log('emailll', req.user.email);
       const query = { userEmail: email, role: 'admin' };
       const result = await userCollection.findOne(query);
       let admin = false;
@@ -186,7 +190,7 @@ async function run() {
     });
 
     // User badge change --
-    app.patch('/change-user-badge', async (req, res) => {
+    app.patch('/change-user-badge', verifyToken, async (req, res) => {
       const badge = req.query.badge;
       const email = req.query.email;
       // console.log('empolye:', role, '===id:', id);
@@ -201,7 +205,7 @@ async function run() {
       res.send(result);
     });
     // User role change --
-    app.patch('/change-user-role', async (req, res) => {
+    app.patch('/change-user-role', verifyToken, async (req, res) => {
       const role = req.query.role;
       const id = req.query.id;
       // console.log('empolye:', role, '===id:', id);
@@ -216,7 +220,7 @@ async function run() {
     });
 
     // Payment part token passing =======
-    app.post('/create-payment-intent', async (req, res) => {
+    app.post('/create-payment-intent', verifyToken, async (req, res) => {
       const { price } = req.body;
       const pricee = parseInt(price * 100);
       // console.log(pricee);
@@ -234,7 +238,7 @@ async function run() {
     });
 
     //  Payment Saved
-    app.post('/payments', async (req, res) => {
+    app.post('/payments', verifyToken, async (req, res) => {
       const data = req.body;
       // const query = { email: data.email, badge: badge };
       const query2 = { userEmail: data.email };
@@ -260,11 +264,11 @@ async function run() {
       res.send({ result, user_update });
     });
     //  Payment History read
-    app.get('/all-payments', async (req, res) => {
+    app.get('/all-payments', verifyToken, async (req, res) => {
       const result = await paymentCollection.find().sort({ _id: -1 }).toArray();
       res.send(result);
     });
-    app.get('/paymentss/:email', async (req, res) => {
+    app.get('/paymentss/:email', verifyToken, async (req, res) => {
       const query = { email: req.params.email };
       const result = await paymentCollection
         .find(query)
@@ -272,7 +276,7 @@ async function run() {
         .toArray();
       res.send(result);
     });
-    app.get('/paymentssCnf/:email', async (req, res) => {
+    app.get('/paymentssCnf/:email', verifyToken, async (req, res) => {
       const query = { email: req.params.email };
       const result = await paymentCollection.findOne(query);
       let final = false;
@@ -283,7 +287,7 @@ async function run() {
     });
 
     // Main part=======================
-    app.post('/upcomig-meal', async (req, res) => {
+    app.post('/upcomig-meal', verifyToken, async (req, res) => {
       const meal = req.body;
       // console.log(newItem);
       const result = await upcomingCollection.insertOne(meal);
@@ -343,7 +347,7 @@ async function run() {
       }
       res.send(result);
     });
-    app.put('/upcoming-meal-update/:id', async (req, res) => {
+    app.put('/upcoming-meal-update/:id', verifyToken, async (req, res) => {
       const meal = req.body;
       const filter = { _id: new ObjectId(req.params.id) };
       // console.log(review);
@@ -356,19 +360,19 @@ async function run() {
       res.send(result);
     });
     // Meal delete Upcoming
-    app.delete('/delete-upcoming-meal/:id', async (req, res) => {
+    app.delete('/delete-upcoming-meal/:id', verifyToken, async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await upcomingCollection.deleteOne(query);
       res.send(result);
     });
-    app.post('/post-meal', async (req, res) => {
+    app.post('/post-meal', verifyToken, async (req, res) => {
       const meal = req.body;
       // console.log(newItem);
       const result = await mealsCollection.insertOne(meal);
       res.send(result);
     });
     // All user read
-    app.get('/total-meals', verifyToken, async (req, res) => {
+    app.get('/total-meals', async (req, res) => {
       const result = await mealsCollection.estimatedDocumentCount();
       res.send({ count: result });
     });
@@ -447,7 +451,7 @@ async function run() {
       res.send(result);
     });
     // detabase all mealsa
-    app.get('/all-meals', async (req, res) => {
+    app.get('/all-meals', verifyToken, async (req, res) => {
       const search = req.query.search;
       const filter = req.query.filter;
       const perpage = parseInt(req.query.perpage);
@@ -490,7 +494,7 @@ async function run() {
       res.send(result);
     });
     // update meal
-    app.put('/meal-update/:id', async (req, res) => {
+    app.put('/meal-update/:id', verifyToken, async (req, res) => {
       const meal = req.body;
       const filter = { _id: new ObjectId(req.params.id) };
       // console.log(review);
@@ -503,7 +507,7 @@ async function run() {
       res.send(result);
     });
     // Meal delete
-    app.delete('/delete-meal/:id', async (req, res) => {
+    app.delete('/delete-meal/:id', verifyToken, async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await mealsCollection.deleteOne(query);
       res.send(result);
@@ -559,7 +563,7 @@ async function run() {
       res.send(result);
     });
     // user Meals post like counting
-    app.put('/like-count', async (req, res) => {
+    app.put('/like-count', verifyToken, async (req, res) => {
       const data = req.body;
       // console.log(data);
       const postId = data.id;
@@ -593,7 +597,7 @@ async function run() {
       res.send({ result, colorResult });
     });
     // user Meals post like counting
-    app.put('/like-count-upcoming', async (req, res) => {
+    app.put('/like-count-upcoming', verifyToken, async (req, res) => {
       const data = req.body;
       // console.log(data);
       const postId = data.id;
@@ -632,7 +636,7 @@ async function run() {
       res.send(likedd);
     });
     // add review post
-    app.post('/post-review', async (req, res) => {
+    app.post('/post-review', verifyToken, async (req, res) => {
       const review = req.body;
       console.log(review);
       const result = await reviewCollection.insertOne(review);
@@ -645,7 +649,7 @@ async function run() {
     });
 
     // Update review post
-    app.put('/review-update/:id', async (req, res) => {
+    app.put('/review-update/:id', verifyToken, async (req, res) => {
       const review = req.body;
       const filter = { _id: new ObjectId(req.params.id) };
       // console.log(review);
@@ -658,7 +662,7 @@ async function run() {
       res.send(result);
     });
     // review read by my post
-    app.get('/read-my-review/:email', async (req, res) => {
+    app.get('/read-my-review/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { reviewUserEmail: email };
       const myReviewArr = await reviewCollection
@@ -677,7 +681,7 @@ async function run() {
       res.send(result);
     });
     // My review delete
-    app.delete('/delete-review/:id', async (req, res) => {
+    app.delete('/delete-review/:id', verifyToken, async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await reviewCollection.deleteOne(query);
       res.send(result);
@@ -713,7 +717,7 @@ async function run() {
     });
 
     // Meals Request
-    app.post('/meals-request', async (req, res) => {
+    app.post('/meals-request', verifyToken, async (req, res) => {
       const request = req.body;
       // console.log(request);
       const query = {
@@ -731,7 +735,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/request-meals/:email', async (req, res) => {
+    app.get('/request-meals/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       try {
         const query = { recEmail: email };
@@ -783,7 +787,7 @@ async function run() {
       }
     });
 
-    app.delete('/cancel-req/:id', async (req, res) => {
+    app.delete('/cancel-req/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const query = { _id: new ObjectId(id) };
@@ -828,7 +832,7 @@ async function run() {
       }
       res.send(result);
     });
-    app.patch('/request-meals-status-update', async (req, res) => {
+    app.patch('/request-meals-status-update', verifyToken, async (req, res) => {
       const id = req.query.id;
       const status = req.query.status;
       // console.log('id:', id, '  status: ', statusDta);
@@ -842,7 +846,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete('/request-delete/:id', async (req, res) => {
+    app.delete('/request-delete/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       // console.log(id);
       const query = { _id: new ObjectId(id) };
