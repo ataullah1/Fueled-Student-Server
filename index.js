@@ -64,13 +64,15 @@ async function run() {
 
     // All DB Cullection
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
-
     // Create an index on the 'title' field
     await mealsCollection.createIndex({ title: 1 });
-    console.log('Index created on title field');
+    // console.log('Index created on title field');
 
     const userCollection = client.db('fueled_student_DB').collection('users');
+    await userCollection.createIndex({ userEmail: 1, userName: 1 });
+
     const likeCollection = client.db('fueled_student_DB').collection('likes');
+
     const paymentCollection = client
       .db('fueled_student_DB')
       .collection('payments');
@@ -79,9 +81,12 @@ async function run() {
       .collection('upcoming_meals');
     // Create an index on the 'title' field
     await mealsCollection.createIndex({ title: 1 });
+
     const mealsRequestCollection = client
       .db('fueled_student_DB')
       .collection('meals-request');
+    await mealsRequestCollection.createIndex({ recEmail: 1, recName: 1 });
+
     const reviewCollection = client
       .db('fueled_student_DB')
       .collection('reviews');
@@ -122,8 +127,42 @@ async function run() {
     });
     // All user read
     app.get('/users', verifyToken, async (req, res) => {
-      console.log('bal:', req.user);
-      const result = await userCollection.find().toArray();
+      const search = req.query.search;
+      const filter = req.query.filter;
+      const perpage = parseInt(req.query.perpage);
+      const currentpage = parseInt(req.query.currentpage);
+      const skip = perpage * currentpage;
+
+      let result;
+      let doc;
+      if (
+        filter === 'Silver' ||
+        filter === 'Gold' ||
+        filter === 'Platinum' ||
+        filter === 'Bronze'
+      ) {
+        doc = {
+          badge: filter,
+        };
+      }
+
+      if (search) {
+        const query = {
+          $or: [
+            { userName: { $regex: search, $options: 'i' } },
+            { userEmail: { $regex: search, $options: 'i' } },
+          ],
+        };
+        result = await userCollection.find(query).toArray();
+      } else if (doc) {
+        result = await userCollection.find(doc).toArray();
+      } else {
+        result = await userCollection
+          .find()
+          .limit(perpage)
+          .skip(skip)
+          .toArray();
+      }
       res.send(result);
     });
 
@@ -142,6 +181,21 @@ async function run() {
       res.send({ admin });
     });
 
+    // User badge change --
+    app.patch('/change-user-badge', async (req, res) => {
+      const badge = req.query.badge;
+      const email = req.query.email;
+      // console.log('empolye:', role, '===id:', id);
+      const query = { email: email };
+      const update = {
+        $set: {
+          role: badge,
+        },
+      };
+      const options = { upsert: true };
+      const result = await userCollection.updateOne(query, update, options);
+      res.send(result);
+    });
     // User role change --
     app.patch('/change-user-role', async (req, res) => {
       const role = req.query.role;
@@ -178,16 +232,34 @@ async function run() {
     //  Payment Saved
     app.post('/payments', async (req, res) => {
       const data = req.body;
-      const query = { email: data.email };
-      const existUser = await paymentCollection.findOne(query);
-      if (existUser) {
-        return res.send({ message: 'User Allready Exists', insertedId: null });
-      }
+      // const query = { email: data.email, badge: badge };
+      const query2 = { userEmail: data.email };
+      const badge = data.badge;
+      const update = {
+        $set: {
+          badge: badge,
+        },
+      };
+      const options = { upsert: true };
+      const user_update = await userCollection.updateOne(
+        query2,
+        update,
+        options
+      );
+
+      // const existUser = await paymentCollection.findOne(query);
+      // if (existUser) {
+      //   return res.send({ message: 'User Allready Exists', insertedId: null });
+      // }
       const result = await paymentCollection.insertOne(data);
 
-      res.send(result);
+      res.send({ result, user_update });
     });
     //  Payment History read
+    app.get('/all-payments', async (req, res) => {
+      const result = await paymentCollection.find().sort({ _id: -1 }).toArray();
+      res.send(result);
+    });
     app.get('/paymentss/:email', async (req, res) => {
       const query = { email: req.params.email };
       const result = await paymentCollection
@@ -296,7 +368,7 @@ async function run() {
       const filter = req.query.filter;
       const search = req.query.search;
       const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
-      const pageSize = 3;
+      const pageSize = 4;
       const skip = (page - 1) * pageSize;
 
       let doc;
@@ -667,12 +739,41 @@ async function run() {
     });
 
     app.get('/request', async (req, res) => {
-      const requestsArray = await mealsRequestCollection
-        .find()
-        .sort({ _id: -1 })
-        .toArray();
-      // console.log(requestsArray);
-      res.send(requestsArray);
+      const search = req.query.search;
+      const filter = req.query.filter;
+
+      let doc;
+      if (
+        filter === 'pending' ||
+        filter === 'processing' ||
+        filter === 'served'
+      ) {
+        doc = {
+          status: filter,
+        };
+      }
+
+      let result;
+      if (search) {
+        const query = {
+          $or: [
+            { recEmail: { $regex: search, $options: 'i' } },
+            { recName: { $regex: search, $options: 'i' } },
+          ],
+        };
+        result = await mealsRequestCollection.find(query).toArray();
+      } else if (doc) {
+        result = await mealsRequestCollection
+          .find(doc)
+          .sort({ _id: -1 })
+          .toArray();
+      } else {
+        result = await mealsRequestCollection
+          .find()
+          .sort({ _id: -1 })
+          .toArray();
+      }
+      res.send(result);
     });
     app.patch('/request-meals-status-update', async (req, res) => {
       const id = req.query.id;
