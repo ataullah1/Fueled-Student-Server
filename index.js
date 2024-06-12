@@ -32,7 +32,7 @@ app.use(cookieParser());
 // Veryfy token
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
-  console.log('verifyTokennn:', token);
+  // console.log('verifyTokennn:', token);
   if (!token) {
     return res.status(401).send({ message: 'Unauthorized' });
   }
@@ -65,11 +65,11 @@ async function run() {
     // All DB Cullection
     const mealsCollection = client.db('fueled_student_DB').collection('meals');
     // Create an index on the 'title' field
-    await mealsCollection.createIndex({ title: 1 });
+    // await mealsCollection.createIndex({ title: 1 });
     // console.log('Index created on title field');
 
     const userCollection = client.db('fueled_student_DB').collection('users');
-    await userCollection.createIndex({ userEmail: 1, userName: 1 });
+    // await userCollection.createIndex({ userEmail: 1, userName: 1 });
 
     const likeCollection = client.db('fueled_student_DB').collection('likes');
 
@@ -80,12 +80,12 @@ async function run() {
       .db('fueled_student_DB')
       .collection('upcoming_meals');
     // Create an index on the 'title' field
-    await mealsCollection.createIndex({ title: 1 });
+    // await mealsCollection.createIndex({ title: 1 });
 
     const mealsRequestCollection = client
       .db('fueled_student_DB')
       .collection('meals-request');
-    await mealsRequestCollection.createIndex({ recEmail: 1, recName: 1 });
+    // await mealsRequestCollection.createIndex({ recEmail: 1, recName: 1 });
 
     const reviewCollection = client
       .db('fueled_student_DB')
@@ -856,7 +856,7 @@ async function run() {
 
     // Send a ping to confirm a successful connection
     // await client.db('admin').command({ ping: 1 });
-    console.log('PYou successfully connected to MongoDB!');
+    // console.log('PYou successfully connected to MongoDB!');
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
