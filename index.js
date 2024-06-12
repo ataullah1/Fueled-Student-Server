@@ -126,6 +126,10 @@ async function run() {
       res.send(result);
     });
     // All user read
+    app.get('/total-users', verifyToken, async (req, res) => {
+      const result = await userCollection.estimatedDocumentCount();
+      res.send({ count: result });
+    });
     app.get('/users', verifyToken, async (req, res) => {
       const search = req.query.search;
       const filter = req.query.filter;
@@ -363,6 +367,11 @@ async function run() {
       const result = await mealsCollection.insertOne(meal);
       res.send(result);
     });
+    // All user read
+    app.get('/total-meals', verifyToken, async (req, res) => {
+      const result = await mealsCollection.estimatedDocumentCount();
+      res.send({ count: result });
+    });
     // Author Md Ataullah
     app.get('/meals', async (req, res) => {
       const filter = req.query.filter;
@@ -404,9 +413,15 @@ async function run() {
 
       let result;
       if (search) {
+        const sampleDocument = await mealsCollection.findOne();
+        const fields = Object.keys(sampleDocument);
+
         const query = {
-          title: { $regex: search, $options: 'i' },
+          $or: fields.map((field) => ({
+            [field]: { $regex: search, $options: 'i' },
+          })),
         };
+
         result = await mealsCollection
           .find(query)
           .sort({ _id: -1 })
@@ -433,7 +448,45 @@ async function run() {
     });
     // detabase all mealsa
     app.get('/all-meals', async (req, res) => {
-      const result = await mealsCollection.find().sort({ _id: -1 }).toArray();
+      const search = req.query.search;
+      const filter = req.query.filter;
+      const perpage = parseInt(req.query.perpage);
+      const currentpage = parseInt(req.query.currentpage);
+      const skip = perpage * currentpage;
+
+      // console.log(filter);
+      let result;
+      if (search) {
+        const sampleDocument = await mealsCollection.findOne();
+        const fields = Object.keys(sampleDocument);
+
+        const query = {
+          $or: fields.map((field) => ({
+            [field]: { $regex: search, $options: 'i' },
+          })),
+        };
+        result = await mealsCollection.find(query).sort({ _id: -1 }).toArray();
+      } else if (filter === 'like') {
+        result = await mealsCollection
+          .find()
+          .sort({ likes: -1 })
+          .limit(perpage)
+          .skip(skip)
+          .toArray();
+      } else if (filter === 'review') {
+        result = await mealsCollection
+          .find()
+          .sort({ review: -1 })
+          .limit(perpage)
+          .skip(skip)
+          .toArray();
+      } else {
+        result = await mealsCollection
+          .find()
+          .limit(perpage)
+          .skip(skip)
+          .toArray();
+      }
       res.send(result);
     });
     // update meal
