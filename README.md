@@ -38,9 +38,27 @@ This project aims to develop a Hostel Management system for a university using t
 
 ## Installation
 
-1. Clone the repository: `git clone https://github.com/programming-hero-web-course1/b9a12-server-side-ataullah1.git`
-2. Navigate to the project directory: `cd b9a12-client-side-ataullah1`
-3. Install dependencies: `npm install`
+1. Clone the repository:
+
+```
+git clone https://github.com/ataullah1/Fueled-Student-Server.git
+```
+
+2. Navigate to the project directory:
+
+```
+cd Fueled-Student-Server
+```
+
+3. Install dependencies:
+
+```
+npm install
+```
+
 4. Configure environment variables (e.g., MongoDB URI, Stripe API keys) in a `.env` file.
-5. Install All dependency: `npm i`
-6. Start the development server: `npm run dev`
+5. Start the development server:
+
+```
+npm run dev
+```
